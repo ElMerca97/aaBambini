@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jardín Maternal Bambini | Menú Gestión</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .gestion-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 50px;
+            text-align: center;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 40px 20px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: #495057;
+            background: #e9ecef;
+            transition: all 0.3s;
+            border: 2px solid #dee2e6;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 105, 180, 0.3);
+            border-color: #FF69B4;
+        }
+
+        .menu-item h3 {
+            font-size: 1.5em;
+            margin-top: 15px;
+            color: #FF69B4;
+        }
+
+        .menu-item span {
+            font-size: 3em;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🛠️ Menú de Gestión de Datos</h1>
+            <p>Selecciona una sección para administrar los registros.</p>
+        </header>
+
+        <div class="gestion-menu">
+            <a href="nino.html" class="menu-item">
+                <span>👶</span>
+                <h3>Registro de Niños</h3>
+            </a>
+            <a href="maestro.html" class="menu-item">
+                <span>👨‍🏫</span>
+                <h3>Registro de Maestros</h3>
+            </a>
+            <a href="clase.html" class="menu-item">
+                <span>📚</span>
+                <h3>Administración de Clases</h3>
+            </a>
+            <a href="asistencia.html" class="menu-item">
+                <span>📋</span>
+                <h3>Registro de Asistencia</h3>
+            </a>
+            <a href="index.html" class="menu-item" style="background: #ADD8E6; border-color: #90EE90;">
+                <span>📈</span>
+                <h3>Volver a Estadísticas</h3>
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

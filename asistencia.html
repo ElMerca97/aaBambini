@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión | Asistencia</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Registro de Asistencia</h1>
+            <p><a href="gestion.html" class="nav-link">← Volver al Menú</a></p>
+        </header>
+
+        <div class="tabs" id="asistenciaTabs">
+            <button class="tab active" onclick="cambiarSeccionAsistencia('asistencia-ninos')">👶 Asistencia Niños</button>
+            <button class="tab" onclick="cambiarSeccionAsistencia('asistencia-maestros')">👨‍🏫 Asistencia Maestros</button>
+            </div>
+
+        <div class="content">
+            <div id="asistencia-ninos" class="section active">
+                <h2>Registrar Asistencia de Niño</h2>
+                <form id="formAsistencia" onsubmit="guardarAsistencia(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Niño *</label>
+                            <select id="ninoAsistencia" required>
+                                <option value="">Seleccionar niño</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha *</label>
+                            <input type="date" id="fechaAsistencia" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hora de entrada</label>
+                            <input type="time" id="horaEntradaAsistencia">
+                        </div>
+                        <div class="form-group">
+                            <label>Hora de salida</label>
+                            <input type="time" id="horaSalidaAsistencia">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="estadoAsistencia">
+                            <option value="presente">Presente</option>
+                            <option value="ausente">Ausente</option>
+                            <option value="tardanza">Tardanza</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Registrar Asistencia</button>
+                </form>
+
+                <h2 style="margin-top: 40px;">Historial de Asistencia de Niños</h2>
+                <table class="asistencia-table" id="tablaAsistencia">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Niño</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyAsistencia"></tbody>
+                </table>
+            </div>
+
+            <div id="asistencia-maestros" class="section">
+                <h2>Registrar Asistencia de Maestro</h2>
+                <form id="formAsistenciaMaestro" onsubmit="guardarAsistenciaMaestro(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Maestro *</label>
+                            <select id="maestroAsistencia" required>
+                                <option value="">Seleccionar maestro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha *</label>
+                            <input type="date" id="fechaAsistenciaMaestro" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="estadoAsistenciaMaestro">
+                            <option value="presente">Presente</option>
+                            <option value="ausente">Ausente</option>
+                            <option value="tardanza">Tardanza</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Registrar Asistencia</button>
+                </form>
+
+                <h2 style="margin-top: 40px;">Historial de Asistencia de Maestros</h2>
+                <table class="asistencia-table" id="tablaAsistenciaMaestro">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Maestro</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyAsistenciaMaestro"></tbody>
+                </table>
+            </div>
+            
+            <div id="reporte-faltas-maestros" class="section">
+                <h2>🚫 Reporte Detallado de Faltas de Maestros</h2>
+                <p>Aquí puedes filtrar las ausencias y tardanzas por mes.</p>
+                
+                <div class="form-row" style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label>Seleccionar Mes del Reporte *</label>
+                        <input type="month" id="selectorMesFaltasMaestros" required>
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="generarReporteFaltasMaestros()">🔎 Generar Reporte</button>
+                    </div>
+                </div>
+
+                <table class="asistencia-table" id="tablaReporteFaltasMaestros">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Maestro</th>
+                            <th>Estado</th>
+                            <th>Descripción Breve</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyReporteFaltasMaestros">
+                        <tr><td colspan="4" style="text-align:center; padding: 40px; color: #6c757d;">Selecciona un mes para generar el reporte.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/scripts.js"></script>
+    <script>
+        // Función para cambiar entre las secciones de asistencia (Niños/Maestros)
+        function cambiarSeccionAsistencia(seccion) {
+            document.querySelectorAll('#asistencia-ninos, #asistencia-maestros, #reporte-faltas-maestros').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(seccion).classList.add('active');
+            
+            // Si el clic viene de una pestaña, asegúrate de marcarla como activa
+            if (event && event.target.classList.contains('tab')) {
+                event.target.classList.add('active');
+            }
+
+            if (seccion === 'asistencia-ninos') {
+                actualizarSelectNinos();
+                mostrarAsistencias();
+            }
+            if (seccion === 'asistencia-maestros') {
+                actualizarSelectMaestrosAsistencia();
+                mostrarAsistenciasMaestros();
+            }
+        }
+        
+        // Función que revisa si viene un parámetro en la URL
+        function manejarRuta() {
+            const params = new URLSearchParams(window.location.search);
+            const view = params.get('view');
+            
+            if (view === 'reporteMaestros') {
+                // Desactivar todas las pestañas visibles para ir al reporte
+                document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+                
+                // Activar la sección de reporte
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById('reporte-faltas-maestros').classList.add('active');
+                
+                // Inicializar el selector de mes con el mes actual
+                const hoy = new Date();
+                const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+                document.getElementById('selectorMesFaltasMaestros').value = mesActual;
+                generarReporteFaltasMaestros(); // Cargar el reporte automáticamente
+                
+            } else {
+                // Cargar por defecto la primera pestaña
+                cambiarSeccionAsistencia('asistencia-ninos');
+            }
+        }
+
+        // Inicializar la página de asistencia
+        window.onload = manejarRuta;
+    </script>
+</body>
+</html>

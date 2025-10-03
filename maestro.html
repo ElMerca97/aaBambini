@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión | Maestros</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👨‍🏫 Gestión de Maestros</h1>
+            <p><a href="gestion.html" class="nav-link">← Volver al Menú</a></p>
+        </header>
+
+        <div class="content">
+            <h2>Registro de Maestros</h2>
+            <form id="formMaestro" onsubmit="guardarMaestro(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre completo *</label>
+                        <input type="text" id="nombreMaestro" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cédula/DNI *</label>
+                        <input type="text" id="cedulaMaestro" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Teléfono *</label>
+                        <input type="text" id="telefonoMaestro" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" id="emailMaestro">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Especialidad</label>
+                    <input type="text" id="especialidadMaestro" placeholder="Ej: Educación Inicial, Música, etc.">
+                </div>
+                <div class="form-group">
+                    <label>Foto del maestro (PNG)</label>
+                    <input type="file" id="fotoMaestro" accept=".png">
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Guardar Maestro</button>
+            </form>
+
+            <h2 style="margin-top: 40px;">Lista de Maestros</h2>
+            <div id="listaMaestros" class="cards-grid"></div>
+        </div>
+    </div>
+
+    <script src="js/scripts.js"></script>
+    <script>
+        window.onload = mostrarMaestros;
+    </script>
+</body>
+</html>

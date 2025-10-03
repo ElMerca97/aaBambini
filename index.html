@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jardín Maternal Bambini | Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilos específicos para el Navbar de la página principal */
+        .navbar {
+            display: flex;
+            justify-content: space-between; /* Añadido para separar los botones */
+            align-items: center;
+            background-color: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .navbar .btn-primary {
+            padding: 12px 30px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👶 Jardín Maternal Bambini</h1>
+            <p>Dashboard de Estadísticas</p>
+            <button class="btn btn-danger" onclick="borrarTodoLocalStorage()"
+                style="padding: 5px 15px; font-size: 0.9em; margin-left: 20px;">
+                🗑️ Borrar Todos los Datos
+            </button>
+        </header>
+
+        <div class="navbar">
+            <button class="btn btn-primary" onclick="descargarReportePDF()" style="background: #003366;">
+                📥 Descargar Reporte Completo (PDF)
+            </button>
+            <a 
+                class="btn btn-primary" 
+                onclick="solicitarAccesoGestion()"
+            >
+                🛠️ Ir a Gestión de Datos
+            </a>
+        </div>
+
+        <div class="content">
+            <div id="estadisticas" class="section active">
+                <h2>📈 Resumen de la Gestión</h2>
+                <div class="cards-grid" id="resumenEstadisticas">
+                    </div>
+                
+                <h2 style="margin-top: 40px;">⏱️ Horas Trabajadas por Maestro (Última Semana)</h2>
+                <table class="asistencia-table" id="tablaHorasTrabajadas">
+                    <thead>
+                        <tr>
+                            <th>Maestro</th>
+                            <th>Lunes</th>
+                            <th>Martes</th>
+                            <th>Miércoles</th>
+                            <th>Jueves</th>
+                            <th>Viernes</th>
+                            <th>Total Semanal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyHorasTrabajadas">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/scripts.js"></script>
+
+    <script>
+        // Lógica de acceso directo en index.html
+        function solicitarAccesoGestion() {
+            const claveIngresada = prompt("⚠️ Ingresa la clave de acceso para ir a Gestión de Datos:");
+            const claveCorrecta = "admin"; 
+
+            if (claveIngresada === claveCorrecta) {
+                window.location.href = 'gestion.html';
+            } else if (claveIngresada !== null) {
+                alert('🚫 Clave incorrecta. Acceso denegado.');
+            }
+        }
+        
+        // Llamada inicial para cargar el dashboard
+        window.onload = function() {
+            mostrarEstadisticas();
+        };
+    </script>
+</body>
+</html>

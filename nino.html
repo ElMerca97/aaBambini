@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión | Niños</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👶 Gestión de Niños</h1>
+            <p><a href="gestion.html" class="nav-link">← Volver al Menú</a></p>
+        </header>
+
+        <div class="content">
+            <h2>Registro de Niños</h2>
+            <form id="formNino" onsubmit="guardarNino(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre completo *</label>
+                        <input type="text" id="nombreNino" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de nacimiento *</label>
+                        <input type="date" id="fechaNacNino" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del tutor *</label>
+                        <input type="text" id="tutorNino" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono contacto *</label>
+                        <input type="text" id="telefonoNino" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="direccionNino">
+                </div>
+                <div class="form-group">
+                    <label>Foto del niño (PNG)</label>
+                    <input type="file" id="fotoNino" accept=".png">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="observacionesNino"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Guardar Niño</button>
+            </form>
+
+            <h2 style="margin-top: 40px;">Lista de Niños</h2>
+            <div id="listaNinos" class="cards-grid"></div>
+        </div>
+    </div>
+
+    <script src="js/scripts.js"></script>
+    <script>
+        window.onload = mostrarNinos;
+    </script>
+</body>
+</html>

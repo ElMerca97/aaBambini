@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión | Clases</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Administración de Clases</h1>
+            <p><a href="gestion.html" class="nav-link">← Volver al Menú</a></p>
+        </header>
+
+        <div class="content">
+            <h2>Registro de Clases</h2>
+            <form id="formClase" onsubmit="guardarClase(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre de la clase *</label>
+                        <input type="text" id="nombreClase" required placeholder="Ej: Sala Amarilla">
+                    </div>
+                    <div class="form-group">
+                        <label>Maestro asignado *</label>
+                        <select id="maestroClase" required>
+                            <option value="">Seleccionar maestro</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Horario entrada *</label>
+                        <input type="time" id="horaEntrada" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Horario salida *</label>
+                        <input type="time" id="horaSalida" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Capacidad máxima</label>
+                    <input type="text" id="capacidadClase" placeholder="Ej: 20 niños">
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Guardar Clase</button>
+            </form>
+
+            <h2 style="margin-top: 40px;">Lista de Clases</h2>
+            <div id="listaClases" class="cards-grid"></div>
+        </div>
+    </div>
+
+    <script src="js/scripts.js"></script>
+    <script>
+        window.onload = function() {
+            actualizarSelectMaestros();
+            mostrarClases();
+        };
+    </script>
+</body>
+</html>
