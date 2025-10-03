@@ -1,0 +1,87 @@
+{
+    "estado": "OK",
+    "fecha_consulta": "2025-10-03",
+    "maestros": [
+        {
+            "id": 101,
+            "nombre": "Ana Pérez",
+            "especialidad": "Pre-escolar",
+            "telefono": "555-1234",
+            "cedula": "1234567-8"
+        },
+        {
+            "id": 102,
+            "nombre": "Carlos Gómez",
+            "especialidad": "Música y Arte",
+            "telefono": "555-5678",
+            "cedula": "9876543-2"
+        }
+    ],
+    "ninos": [
+        {
+            "id": 201,
+            "nombre": "Sofía Rodríguez",
+            "tutor": "Laura Rodríguez",
+            "fechaNac": "2022-03-15"
+        },
+        {
+            "id": 202,
+            "nombre": "Mateo López",
+            "tutor": "Juan López",
+            "fechaNac": "2023-01-20"
+        }
+    ],
+    "asistenciasMaestros": [
+        {
+            "id": 301,
+            "maestroId": 101,
+            "maestroNombre": "Ana Pérez",
+            "fecha": "2025-09-29",
+            "estado": "presente"
+        },
+        {
+            "id": 302,
+            "maestroId": 101,
+            "maestroNombre": "Ana Pérez",
+            "fecha": "2025-10-01",
+            "estado": "ausente"
+        },
+        {
+            "id": 303,
+            "maestroId": 102,
+            "maestroNombre": "Carlos Gómez",
+            "fecha": "2025-10-02",
+            "estado": "tardanza"
+        },
+        {
+            "id": 304,
+            "maestroId": 102,
+            "maestroNombre": "Carlos Gómez",
+            "fecha": "2025-10-03",
+            "estado": "presente"
+        }
+    ],
+    "asistenciasNinos": [
+        {
+            "id": 401,
+            "ninoId": 201,
+            "ninoNombre": "Sofía Rodríguez",
+            "fecha": "2025-10-01",
+            "estado": "ausente"
+        },
+        {
+            "id": 402,
+            "ninoId": 202,
+            "ninoNombre": "Mateo López",
+            "fecha": "2025-10-02",
+            "estado": "presente"
+        },
+        {
+            "id": 403,
+            "ninoId": 201,
+            "ninoNombre": "Sofía Rodríguez",
+            "fecha": "2025-10-03",
+            "estado": "tardanza"
+        }
+    ]
+}

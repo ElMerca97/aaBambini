@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +10,44 @@
         /* Estilos específicos para el Navbar de la página principal */
         .navbar {
             display: flex;
-            justify-content: space-between; /* Añadido para separar los botones */
+            justify-content: space-between;
             align-items: center;
             background-color: #f8f9fa;
             padding: 15px 30px;
             border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
+            /* Permite que los elementos se ajusten en pantallas pequeñas */
         }
+
         .navbar .btn-primary {
             padding: 12px 30px;
             text-decoration: none;
             cursor: pointer;
+            margin: 5px;
+            /* Espacio entre los botones/selectores */
+        }
+
+        .reporte-mensual-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .reporte-mensual-controls label {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #343a40;
+        }
+
+        .reporte-mensual-controls input[type="month"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -34,13 +60,16 @@
         </header>
 
         <div class="navbar">
-            <button class="btn btn-primary" onclick="descargarReportePDF()" style="background: #003366;">
-                📥 Descargar Reporte Completo (PDF)
-            </button>
-            <a 
-                class="btn btn-primary" 
-                onclick="solicitarAccesoGestion()"
-            >
+
+            <div class="reporte-mensual-controls">
+                <label for="selectorReporteMensual">Reporte Mensual:</label>
+                <input type="month" id="selectorReporteMensual" value="2025-10">
+                <button class="btn btn-primary" style="background: #FF6900; border: none;"
+                    onclick="descargarReporteMensualPDF()">
+                    ⬇️ Generar PDF
+                </button>
+            </div>
+            <a class="btn btn-primary" onclick="solicitarAccesoGestion()" style="background: #6c757d;">
                 🛠️ Ir a Gestión de Datos
             </a>
         </div>
@@ -49,8 +78,8 @@
             <div id="estadisticas" class="section active">
                 <h2>📈 Resumen de la Gestión</h2>
                 <div class="cards-grid" id="resumenEstadisticas">
-                    </div>
-                
+                </div>
+
                 <h2 style="margin-top: 40px;">⏱️ Horas Trabajadas por Maestro (Última Semana)</h2>
                 <table class="asistencia-table" id="tablaHorasTrabajadas">
                     <thead>
@@ -65,7 +94,7 @@
                         </tr>
                     </thead>
                     <tbody id="bodyHorasTrabajadas">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -74,22 +103,35 @@
     <script src="js/scripts.js"></script>
 
     <script>
-        // Lógica de acceso directo en index.html
+        // Función de solicitud de acceso (si la usas)
         function solicitarAccesoGestion() {
-            const claveIngresada = prompt("⚠️ Ingresa la clave de acceso para ir a Gestión de Datos:");
-            const claveCorrecta = "admin"; 
-
-            if (claveIngresada === claveCorrecta) {
-                window.location.href = 'gestion.html';
+            const claveIngresada = prompt("Ingresa la clave de acceso para ir a Gestión de Datos:");
+            if (claveIngresada === "admin") {
+                window.location.href = 'gestion.html'; // Asegúrate que la ruta sea correcta
             } else if (claveIngresada !== null) {
-                alert('🚫 Clave incorrecta. Acceso denegado.');
+                alert('🚫 Clave incorrecta.');
             }
         }
-        
-        // Llamada inicial para cargar el dashboard
-        window.onload = function() {
-            mostrarEstadisticas();
+
+        // --- INICIALIZACIÓN Y LÓGICA DE CARGA ---
+
+        // Establecer el valor predeterminado del selector al mes actual
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const selector = document.getElementById('selectorReporteMensual');
+            if (selector) {
+                selector.value = `${year}-${month}`;
+            }
+        });
+
+        // Llamada para iniciar la carga de datos (Se ejecuta después de que el DOM esté listo)
+        window.onload = function () {
+            // Llama a la función asíncrona de carga de datos definida en scripts.js
+            cargarDatosIniciales();
         };
     </script>
 </body>
+
 </html>

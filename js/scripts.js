@@ -1,26 +1,313 @@
+// ==========================================================
 // Base de datos en memoria (Centralizada para todas las páginas)
-let ninos = JSON.parse(localStorage.getItem('ninos')) || [];
-let maestros = JSON.parse(localStorage.getItem('maestros')) || [];
-let clases = JSON.parse(localStorage.getItem('clases')) || [];
-let asistencias = JSON.parse(localStorage.getItem('asistencias')) || [];
-let asistenciasMaestros = JSON.parse(localStorage.getItem('asistenciasMaestros')) || []; 
+// ==========================================================
+let ninos = [];
+let maestros = [];
+let clases = JSON.parse(localStorage.getItem('clases')) || []; 
+let asistencias = []; // Asistencia Niños
+let asistenciasMaestros = []; // Asistencia Maestros
+
+// Variable de bandera para saber si cargamos la API
+const USAR_API_EJEMPLO = true; 
 
 // ==========================================================
-// NUEVA FUNCIÓN: BORRADO TOTAL DE DATOS
+// FUNCIÓN PARA CARGAR DATOS SIMULANDO UNA API (FETCH)
+// ==========================================================
+async function cargarDatosIniciales() {
+    if (USAR_API_EJEMPLO) {
+        try {
+            // Simulación de una llamada API real a 'api_data.json'
+            const response = await fetch('api_data.json');
+            
+            if (!response.ok) {
+                console.warn("🚫 API de ejemplo no encontrada. Cargando datos desde localStorage.");
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Reemplazar los datos globales con los de la API
+            ninos = data.ninos || [];
+            maestros = data.maestros || [];
+            asistencias = data.asistenciasNinos || [];
+            asistenciasMaestros = data.asistenciasMaestros || [];
+
+            // Guardar los datos de la API en localStorage como respaldo/cache
+            localStorage.setItem('ninos', JSON.stringify(ninos));
+            localStorage.setItem('maestros', JSON.stringify(maestros));
+            localStorage.setItem('asistencias', JSON.stringify(asistencias));
+            localStorage.setItem('asistenciasMaestros', JSON.stringify(asistenciasMaestros));
+            
+            console.log("✅ Datos cargados desde la API de ejemplo.");
+
+        } catch (error) {
+            // Fallback: Si el fetch falla, intenta cargar de localStorage
+            ninos = JSON.parse(localStorage.getItem('ninos')) || [];
+            maestros = JSON.parse(localStorage.getItem('maestros')) || [];
+            asistencias = JSON.parse(localStorage.getItem('asistencias')) || [];
+            asistenciasMaestros = JSON.parse(localStorage.getItem('asistenciasMaestros')) || [];
+            
+            console.log("✅ Datos cargados desde localStorage (Fallback).");
+        }
+    } else {
+        // Lógica original de carga exclusiva de localStorage
+        ninos = JSON.parse(localStorage.getItem('ninos')) || [];
+        maestros = JSON.parse(localStorage.getItem('maestros')) || [];
+        asistencias = JSON.parse(localStorage.getItem('asistencias')) || [];
+        asistenciasMaestros = JSON.parse(localStorage.getItem('asistenciasMaestros')) || [];
+    }
+
+    // Llama a las funciones de visualización específicas de cada página 
+    if (document.getElementById('resumenEstadisticas')) mostrarEstadisticas();
+    if (document.getElementById('listaNinos')) mostrarNinos();
+    if (document.getElementById('listaMaestros')) mostrarMaestros();
+    if (document.getElementById('listaClases')) mostrarClases();
+    if (document.getElementById('bodyAsistencia')) mostrarAsistencias();
+    if (document.getElementById('bodyAsistenciaMaestro')) mostrarAsistenciasMaestros();
+    if (document.getElementById('selectorMesFaltasMaestros')) generarReporteFaltasMaestros();
+    
+    // Si estás en una página donde estos selectores existen, actualízalos
+    if (document.getElementById('ninoAsistencia') || document.getElementById('maestroClase')) {
+        actualizarSelectNinos();
+        actualizarSelectMaestrosAsistencia();
+        actualizarSelectMaestros();
+    }
+}
+
+// ==========================================================
+// FUNCIÓN AUXILIAR: CALCULAR HORAS TRABAJADAS POR MES
+// ==========================================================
+
+function calcularHorasTrabajadasPorMes(mesAnio) {
+    if (!mesAnio) return {};
+
+    const [anioStr, mesStr] = mesAnio.split('-');
+    const anio = parseInt(anioStr);
+    const mes = parseInt(mesStr); // Mes 1-12
+
+    const horasPorMaestro = {};
+    
+    // Inicializar la estructura de datos con todos los maestros
+    maestros.forEach(m => {
+        horasPorMaestro[m.id] = {
+            nombre: m.nombre,
+            total: 0,
+            presente: 0 // Conteo de días Presentes
+        };
+    });
+
+    // Iterar sobre las asistencias
+    asistenciasMaestros.forEach(a => {
+        // 'T00:00:00' se agrega para evitar problemas de zona horaria al crear la fecha
+        const fecha = new Date(a.fecha + 'T00:00:00'); 
+        
+        // Filtrar por el mes y año deseado
+        if (fecha.getFullYear() === anio && (fecha.getMonth() + 1) === mes) {
+            
+            const maestroId = a.maestroId;
+            
+            if (horasPorMaestro[maestroId] && a.estado === 'presente') {
+                const horasDiarias = 4; // Asumimos 4 horas de jornada por día presente
+                horasPorMaestro[maestroId].total += horasDiarias;
+                horasPorMaestro[maestroId].presente += 1;
+            }
+        }
+    });
+
+    return horasPorMaestro; // Devuelve los datos de horas/días trabajados
+}
+
+
+// ==========================================================
+// FUNCIÓN PRINCIPAL: DESCARGA DE REPORTE MENSUAL PDF
+// ==========================================================
+
+function descargarReporteMensualPDF() {
+    // 1. Obtener el mes seleccionado del HTML
+    const mesAnio = document.getElementById('selectorReporteMensual').value; 
+    
+    if (!mesAnio) {
+        alert('Por favor, selecciona un mes y año para generar el reporte.');
+        return;
+    }
+    
+    const [anioStr, mesStr] = mesAnio.split('-');
+    const anio = parseInt(anioStr);
+    const mes = parseInt(mesStr); // Mes 1-12
+
+    const nombreMes = new Date(anio, mes - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+    const fechaActual = new Date().toLocaleDateString('es-ES');
+    
+    // Calcular datos
+    const horasMaestrosMensuales = calcularHorasTrabajadasPorMes(mesAnio);
+    
+    // --- Filtrar faltas para el mes seleccionado ---
+    const faltasMaestros = asistenciasMaestros.filter(a => {
+        const fecha = new Date(a.fecha + 'T00:00:00'); 
+        return fecha.getFullYear() === anio && 
+               (fecha.getMonth() + 1) === mes && 
+               (a.estado !== 'presente');
+    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    
+    const faltasNinos = asistencias.filter(a => {
+        const fecha = new Date(a.fecha + 'T00:00:00'); 
+        return fecha.getFullYear() === anio && 
+               (fecha.getMonth() + 1) === mes && 
+               (a.estado !== 'presente');
+    }).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+
+    // --- 1. Resumen de Faltas y Horas de Maestros ---
+    let resumenMaestrosHTML = `
+        <h3>1. Resumen de Maestros: Horas y Faltas en ${nombreMes.toUpperCase()}</h3>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Maestro</th>
+                    <th>Días Presente</th>
+                    <th>Horas Trabajadas (Total)</th>
+                    <th>Faltas/Tardanzas (Cant.)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+    if (maestros.length === 0) {
+        resumenMaestrosHTML += '<tr><td colspan="4">No hay maestros registrados.</td></tr>';
+    } else {
+        resumenMaestrosHTML += maestros.map(maestro => {
+            const data = horasMaestrosMensuales[maestro.id] || { total: 0, presente: 0 };
+            const faltasCount = faltasMaestros.filter(f => f.maestroId === maestro.id).length;
+            
+            return `
+                <tr>
+                    <td>${maestro.nombre}</td>
+                    <td>${data.presente} días</td>
+                    <td>${data.total.toFixed(1)} horas</td>
+                    <td>${faltasCount}</td>
+                </tr>`;
+        }).join('');
+    }
+    resumenMaestrosHTML += '</tbody></table><div class="page-break"></div>';
+
+    // --- 2. Detalle de Faltas de Maestros ---
+    let detalleFaltasMaestrosHTML = `
+        <h3>2. Detalle de Faltas de Maestros (${faltasMaestros.length} registros)</h3>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Maestro</th>
+                    <th>Estado</th>
+                    <th>Descripción Breve</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    if (faltasMaestros.length === 0) {
+        detalleFaltasMaestrosHTML += '<tr><td colspan="4">No se registraron faltas de maestros en este mes.</td></tr>';
+    } else {
+        detalleFaltasMaestrosHTML += faltasMaestros.map(a => {
+            const descripcion = a.estado === 'ausente' ? 'Ausencia total' : 'Llegó con tardanza';
+            return `
+                <tr>
+                    <td>${new Date(a.fecha).toLocaleDateString('es-ES')}</td>
+                    <td>${a.maestroNombre}</td>
+                    <td>${a.estado.toUpperCase()}</td>
+                    <td>${descripcion}</td>
+                </tr>`;
+        }).join('');
+    }
+    detalleFaltasMaestrosHTML += '</tbody></table><div class="page-break"></div>';
+
+    // --- 3. Detalle de Faltas de Niños ---
+    let detalleFaltasNinosHTML = `
+        <h3>3. Detalle de Faltas de Niños (${faltasNinos.length} registros)</h3>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Niño</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    if (faltasNinos.length === 0) {
+        detalleFaltasNinosHTML += '<tr><td colspan="3">No se registraron faltas de niños en este mes.</td></tr>';
+    } else {
+        detalleFaltasNinosHTML += faltasNinos.map(a => `
+            <tr>
+                <td>${new Date(a.fecha).toLocaleDateString('es-ES')}</td>
+                <td>${a.ninoNombre}</td>
+                <td>${a.estado.toUpperCase()}</td>
+            </tr>`).join('');
+    }
+    detalleFaltasNinosHTML += '</tbody></table>';
+
+    // --- Estilos para la impresión (PDF) ---
+    const printStyles = `
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #003366; border-bottom: 2px solid #FF6900; padding-bottom: 5px; }
+            h3 { color: #003366; margin-top: 20px; font-size: 1.2em; }
+            .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .report-table th, .report-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            .report-table th { background-color: #f2f2f2; color: #003366; }
+            .date-info { margin-bottom: 20px; font-style: italic; }
+            @media print {
+                .page-break { page-break-after: always; }
+                body { margin: 0; }
+                h1 { margin-top: 0; }
+            }
+        </style>
+    `;
+
+    // --- Estructura completa del HTML del reporte ---
+    const reportHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Reporte Mensual - ${nombreMes}</title>
+            ${printStyles}
+        </head>
+        <body>
+            <h1>Reporte Mensual de Gestión - ${nombreMes}</h1>
+            <p class="date-info">Generado el: ${fechaActual}</p>
+            
+            ${resumenMaestrosHTML}
+            ${detalleFaltasMaestrosHTML}
+            ${detalleFaltasNinosHTML}
+            
+        </body>
+        </html>
+    `;
+
+    // Abrir una nueva ventana e imprimir
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+        printWindow.document.write(reportHTML);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    } else {
+        alert('Por favor, permite las ventanas emergentes para generar el PDF.');
+    }
+}
+
+
+// ==========================================================
+// FUNCIÓN DE BORRADO TOTAL DE DATOS (gestion.html)
 // ==========================================================
 
 function borrarTodoLocalStorage() {
-    // Primera confirmación
     if (confirm('⚠️ ADVERTENCIA: Esta acción BORRARÁ permanentemente TODOS los datos (Niños, Maestros, Clases y Asistencias) guardados en tu navegador. ¿Estás absolutamente seguro de continuar?')) {
-        
-        // Segunda confirmación con clave (para mayor seguridad)
-        const claveIngresada = prompt("CONFIRMA LA ACCIÓN: Ingresa la clave de acceso para borrar todos los datos.");
+        const claveIngresada = prompt("CONFIRMA LA ACCIÓN: Ingresa la clave de acceso ('admin') para borrar todos los datos.");
         const claveCorrecta = "admin";
 
         if (claveIngresada === claveCorrecta) {
             localStorage.clear();
             alert('✅ Todos los datos han sido eliminados correctamente.');
-            // Recargar la página para reflejar el cambio (volviendo al estado inicial)
             window.location.reload(); 
         } else if (claveIngresada !== null) {
             alert('🚫 Clave incorrecta. Borrado cancelado.');
@@ -30,7 +317,7 @@ function borrarTodoLocalStorage() {
 
 
 // ==========================================================
-// FUNCIONES DE ESTADÍSTICAS (Usadas por index.html)
+// FUNCIONES DE ESTADÍSTICAS (index.html) - Adaptadas a la nueva lógica
 // ==========================================================
 
 function calcularAusenciasNinos() {
@@ -41,38 +328,28 @@ function calcularAusenciasMaestros() {
     return asistenciasMaestros.filter(a => a.estado === 'ausente').length;
 }
 
-/**
- * Calcula y devuelve un objeto con el total de horas trabajadas por maestro en la semana actual.
- * @returns {Object} { maestroId: { nombre: string, total: number, dias: object } }
- */
+// Mantenemos la función de Horas Trabajadas SEMANAL solo para el dashboard principal si es necesario.
 function calcularHorasTrabajadasPorSemana() {
     const horasPorMaestro = {};
     const hoy = new Date();
-    // Obtener el lunes de la semana actual
     const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1))); 
     inicioSemana.setHours(0, 0, 0, 0);
 
-    // Inicializar la estructura
     maestros.forEach(m => {
         horasPorMaestro[m.id] = {
             nombre: m.nombre,
-            dias: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, // Lunes a Viernes
+            dias: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }, 
             total: 0
         };
     });
 
-    // Usar la tabla de asistenciasMaestros para calcular horas
     asistenciasMaestros.forEach(a => {
-        const fecha = new Date(a.fecha);
-        fecha.setHours(0, 0, 0, 0);
+        const fecha = new Date(a.fecha + 'T00:00:00'); 
         
-        // Simulación de horas: Si está presente, asignamos 4 horas fijas 
         if (fecha >= inicioSemana && fecha.getDay() >= 1 && fecha.getDay() <= 5 && a.estado === 'presente') {
-            
             const maestroId = a.maestroId;
-            const horasTrabajadas = 4; // Asumimos 4 horas de jornada
-
-            const diaSemana = fecha.getDay(); // 1 = Lunes, 5 = Viernes
+            const horasTrabajadas = 4;
+            const diaSemana = fecha.getDay();
             
             if (horasPorMaestro[maestroId]) {
                 horasPorMaestro[maestroId].dias[diaSemana] += horasTrabajadas;
@@ -81,7 +358,6 @@ function calcularHorasTrabajadasPorSemana() {
         }
     });
 
-    // Formatear la tabla en index.html
     const tbody = document.getElementById('bodyHorasTrabajadas');
     if (tbody) { 
         tbody.innerHTML = Object.values(horasPorMaestro).map(data => `
@@ -97,7 +373,7 @@ function calcularHorasTrabajadasPorSemana() {
         `).join('');
     }
     
-    return horasPorMaestro; // Devolver los datos para el reporte CSV
+    return horasPorMaestro;
 }
 
 
@@ -134,156 +410,13 @@ function mostrarEstadisticas() {
     calcularHorasTrabajadasPorSemana();
 }
 
-// ==========================================================
-// FUNCIÓN DE DESCARGA DE REPORTE PDF
-// ==========================================================
-
-function descargarReportePDF() {
-    const horasMaestros = calcularHorasTrabajadasPorSemana(); 
-    const fechaActual = new Date().toLocaleDateString('es-ES');
-
-    // --- 1. Faltas de Maestros ---
-    let faltasMaestrosHTML = `
-        <h3>1. Faltas de Maestros (Total: ${asistenciasMaestros.filter(a => a.estado !== 'presente').length})</h3>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Maestro</th>
-                    <th>Estado</th>
-                    <th>Descripción Breve</th>
-                </tr>
-            </thead>
-            <tbody>`;
-    
-    const faltasMaestros = asistenciasMaestros.filter(a => a.estado !== 'presente').sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-    if (faltasMaestros.length === 0) {
-        faltasMaestrosHTML += '<tr><td colspan="4">No se registraron faltas de maestros.</td></tr>';
-    } else {
-        faltasMaestrosHTML += faltasMaestros.map(a => {
-            const descripcion = a.estado === 'ausente' ? 'Ausencia total ese día' : 'Llegó con tardanza';
-            return `
-                <tr>
-                    <td>${new Date(a.fecha).toLocaleDateString('es-ES')}</td>
-                    <td>${a.maestroNombre}</td>
-                    <td>${a.estado.toUpperCase()}</td>
-                    <td>${descripcion}</td>
-                </tr>`;
-        }).join('');
-    }
-    faltasMaestrosHTML += '</tbody></table><div class="page-break"></div>';
-
-    // --- 2. Faltas de Niños ---
-    let faltasNinosHTML = `
-        <h3>2. Faltas de Niños (Ausencias/Tardanzas: ${asistencias.filter(a => a.estado !== 'presente').length})</h3>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Niño</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>`;
-    
-    const faltasNinos = asistencias.filter(a => a.estado !== 'presente').sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-    if (faltasNinos.length === 0) {
-        faltasNinosHTML += '<tr><td colspan="3">No se registraron faltas de niños.</td></tr>';
-    } else {
-        faltasNinosHTML += faltasNinos.map(a => `
-            <tr>
-                <td>${new Date(a.fecha).toLocaleDateString('es-ES')}</td>
-                <td>${a.ninoNombre}</td>
-                <td>${a.estado.toUpperCase()}</td>
-            </tr>`).join('');
-    }
-    faltasNinosHTML += '</tbody></table><div class="page-break"></div>';
-
-    // --- 3. Horas Trabajadas ---
-    let horasTrabajadasHTML = `
-        <h3>3. Horas Trabajadas por Maestro (Total Semanal)</h3>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Maestro</th>
-                    <th>Total Horas Trabajadas (Semana)</th>
-                </tr>
-            </thead>
-            <tbody>`;
-            
-    if (Object.keys(horasMaestros).length === 0) {
-        horasTrabajadasHTML += '<tr><td colspan="2">No hay datos de maestros o asistencias para esta semana.</td></tr>';
-    } else {
-        horasTrabajadasHTML += Object.values(horasMaestros).map(data => `
-            <tr>
-                <td>${data.nombre}</td>
-                <td>${data.total.toFixed(1)} horas</td>
-            </tr>`).join('');
-    }
-    horasTrabajadasHTML += '</tbody></table>';
-
-    // --- Estilos para la impresión (PDF) ---
-    const printStyles = `
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #003366; border-bottom: 2px solid #FF6900; padding-bottom: 5px; }
-            h2 { color: #FF6900; margin-top: 30px; }
-            h3 { color: #003366; margin-top: 20px; font-size: 1.2em; }
-            .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            .report-table th, .report-table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            .report-table th { background-color: #f2f2f2; color: #003366; }
-            .date-info { margin-bottom: 20px; font-style: italic; }
-            @media print {
-                /* Asegura un salto de página después de cada sección (si es necesario) */
-                .page-break { page-break-after: always; }
-                body { margin: 0; }
-                h1 { margin-top: 0; }
-            }
-        </style>
-    `;
-
-    // --- Estructura completa del HTML del reporte ---
-    const reportHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Reporte de Gestión Bambini - ${fechaActual}</title>
-            ${printStyles}
-        </head>
-        <body>
-            <h1>Reporte de Gestión Detallado - Jardín Bambini</h1>
-            <p class="date-info">Generado el: ${fechaActual}</p>
-            
-            ${faltasMaestrosHTML}
-            ${faltasNinosHTML}
-            ${horasTrabajadasHTML}
-            
-        </body>
-        </html>
-    `;
-
-    // Abrir una nueva ventana, escribir el contenido y mandar a imprimir
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-        printWindow.document.write(reportHTML);
-        printWindow.document.close();
-        printWindow.focus();
-        printWindow.print();
-    } else {
-        alert('Por favor, permite las ventanas emergentes para generar el PDF.');
-    }
-}
-
 
 // ==========================================================
 // FUNCIONES DE REPORTE DE FALTAS (Asistencia.html)
 // ==========================================================
 
 function generarReporteFaltasMaestros() {
-    const mesAnio = document.getElementById('selectorMesFaltasMaestros').value; // Formato YYYY-MM
+    const mesAnio = document.getElementById('selectorMesFaltasMaestros')?.value; 
     const tbody = document.getElementById('bodyReporteFaltasMaestros');
     
     if (!tbody || !mesAnio) {
@@ -295,7 +428,7 @@ function generarReporteFaltasMaestros() {
     
     const [anioStr, mesStr] = mesAnio.split('-');
     const anio = parseInt(anioStr);
-    const mes = parseInt(mesStr); // Mes 1-12
+    const mes = parseInt(mesStr); 
 
     const faltasFiltradas = asistenciasMaestros.filter(a => {
         const fecha = new Date(a.fecha + 'T00:00:00'); 
@@ -340,7 +473,8 @@ function generarReporteFaltasMaestros() {
 
 
 // ==========================================================
-// FUNCIONES DE GESTIÓN (Resto del script sin cambios)
+// FUNCIONES DE GESTIÓN (CRUD - Niños, Maestros, Clases, Asistencia)
+// (Mantengo estas funciones igual a la versión anterior, que ya funcionaban)
 // ==========================================================
 
 // --- NIÑOS ---
